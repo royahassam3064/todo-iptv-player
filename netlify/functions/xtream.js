@@ -1,37 +1,46 @@
+
 exports.handler = async (event) => {
-  if (event.httpMethod !== "GET") {
+  if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: "Method not allowed" })
     };
   }
 
-  const params = event.queryStringParameters || {};
-  const { server, username, password, action } = params;
-
-  const allowedActions = [
-    "get_live_categories",
-    "get_live_streams",
-    "get_vod_categories",
-    "get_vod_streams",
-    "get_series_categories",
-    "get_series"
-  ];
-
-  if (!server || !username || !password || !allowedActions.includes(action)) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: "بيانات غير مكتملة أو إجراء غير مسموح" })
-    };
-  }
-
   try {
-    const url = new URL(server);
-    if (!["http:", "https:"].includes(url.protocol)) {
-      throw new Error("Invalid protocol");
+    const { server, username, password, action } =
+      JSON.parse(event.body || "{}");
+
+    const allowedActions = [
+      "get_live_streams",
+      "get_vod_streams",
+      "get_series",
+      "get_live_categories",
+      "get_vod_categories",
+      "get_series_categories"
+    ];
+
+    if (!server || !username || !password ||
+        !allowedActions.includes(action)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "بيانات غير مكتملة" })
+      };
     }
 
-    const api = new URL("/player_api.php", url.origin);
+    const base = new URL(server);
+
+    if (!["http:", "https:"].includes(base.protocol) ||
+        base.username || base.password ||
+        base.hostname === "localhost" ||
+        base.hostname === "127.0.0.1" ||
+        base.hostname === "::1" ||
+        base.hostname.endsWith(".local")) {
+      throw new Error("Invalid server");
+    }
+
+    const api = new URL("/player_api.php", base.origin);
+
     api.search = new URLSearchParams({
       username,
       password,
@@ -40,10 +49,10 @@ exports.handler = async (event) => {
 
     const response = await fetch(api, {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(20000)
     });
 
-    const data = await response.text();
+    const body = await response.text();
 
     return {
       statusCode: response.status,
@@ -51,12 +60,17 @@ exports.handler = async (event) => {
         "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "no-store"
       },
-      body: data
+      body
     };
   } catch (error) {
     return {
       statusCode: 502,
-      body: JSON.stringify({ error: "تعذر الاتصال بسيرفر Xtream" })
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        error: "تعذر الاتصال بسيرفر Xtream"
+      })
     };
   }
 };
