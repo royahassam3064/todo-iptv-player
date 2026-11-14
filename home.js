@@ -129,11 +129,11 @@ async function xtreamRequest(action = "") {
     throw new Error("استجابة غير صالحة من الخادم");
   }
 
-  if (!response.ok) {
-    throw new Error(
-      data.error || "فشل الاتصال بسيرفر Xtream"
-    );
-  }
+if (!response.ok) {
+  throw new Error(
+    `${data.error || "فشل الاتصال"} | HTTP: ${response.status} | التفاصيل: ${JSON.stringify(data)}`
+  );
+}
 
   if (!Array.isArray(data)) {
     throw new Error("بيانات القائمة غير صحيحة");
