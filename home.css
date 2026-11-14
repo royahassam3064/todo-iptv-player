@@ -1,0 +1,141 @@
+
+.home-main {
+  width: min(1200px, 92%);
+  margin: 45px auto;
+}
+
+.home-heading h1 {
+  font-size: 36px;
+  margin: 15px 0;
+}
+
+.home-heading h1 span {
+  color: #a69aff;
+}
+
+.home-heading p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.logout-btn,
+#closePlayer {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--glass);
+  color: white;
+  cursor: pointer;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 35px 0 20px;
+  overflow-x: auto;
+}
+
+.category {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 20px;
+  color: var(--muted);
+  background: var(--glass);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.category.active {
+  color: white;
+  background: #8b78ff35;
+  border-color: #a69aff70;
+}
+
+.search-area {
+  margin-bottom: 25px;
+}
+
+.channel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 15px;
+}
+
+.channel-card {
+  min-width: 0;
+  padding: 17px 12px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--glass);
+  text-align: center;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.channel-card:active {
+  transform: scale(.97);
+}
+
+.channel-card img {
+  width: 75px;
+  height: 75px;
+  object-fit: contain;
+  margin-bottom: 12px;
+}
+
+.channel-card h3 {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.loading {
+  color: var(--muted);
+  text-align: center;
+  grid-column: 1 / -1;
+  padding: 35px;
+}
+
+.player-section {
+  margin-top: 35px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--glass);
+}
+
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.player-header h2 {
+  font-size: 17px;
+}
+
+#videoPlayer {
+  display: block;
+  width: 100%;
+  max-height: 65vh;
+  aspect-ratio: 16 / 9;
+  background: black;
+  border-radius: 12px;
+}
+
+#playerMessage {
+  color: var(--muted);
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .home-heading h1 {
+    font-size: 29px;
+  }
+
+  .channel-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
