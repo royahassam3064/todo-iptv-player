@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#090b12">
+  <title>TODO IPTV PLAYER</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="logo">TODO <span>IPTV</span></div>
+    <div class="status">PLAYER</div>
+  </header>
+
+  <main>
+    <section class="welcome">
+      <span class="eyebrow">YOUR ENTERTAINMENT</span>
+      <h1>كل ترفيهك<br><span>بمكان واحد.</span></h1>
+      <p>سجّل دخولك إلى قائمة IPTV للبدء.</p>
+    </section>
+
+    <section class="login-card">
+      <div class="tabs">
+        <button class="tab active" data-mode="xtream">Xtream Codes</button>
+        <button class="tab" data-mode="m3u">M3U Playlist</button>
+      </div>
+
+      <form id="loginForm">
+        <div id="xtreamFields">
+          <label>رابط السيرفر</label>
+          <input id="server" type="url" placeholder="http://server:port">
+
+          <label>اسم المستخدم</label>
+          <input id="username" type="text" placeholder="Username">
+
+          <label>كلمة المرور</label>
+          <input id="password" type="password" placeholder="Password">
+        </div>
+
+        <div id="m3uFields" hidden>
+          <label>رابط قائمة M3U</label>
+          <input id="m3uUrl" type="url" placeholder="https://example.com/playlist.m3u">
+
+          <p class="or">أو اختر ملف M3U من جهازك</p>
+          <input id="m3uFile" type="file" accept=".m3u,.m3u8">
+        </div>
+
+        <button class="connect-btn" type="submit">
+          اتصال بالقائمة
+        </button>
+
+        <p id="message"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer>TODO IPTV PLAYER © 2026</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
