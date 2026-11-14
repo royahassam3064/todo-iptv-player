@@ -63,14 +63,15 @@ exports.handler = async (event) => {
       body
     };
   } catch (error) {
-    return {
-      statusCode: 502,
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        error: "تعذر الاتصال بسيرفر Xtream"
-      })
-    };
-  }
+if (!response.ok) {
+  return {
+    statusCode: 502,
+    headers,
+    body: JSON.stringify({
+      error: "سيرفر Xtream رفض الطلب",
+      status: response.status,
+      action
+    })
+  };
+}
 };
