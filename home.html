@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080a12">
+  <title>TODO IPTV PLAYER</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="logo">TODO <span>IPTV</span></div>
+    <button id="logoutBtn" class="logout-btn">تسجيل الخروج</button>
+  </header>
+
+  <main class="home-main">
+    <section class="home-heading">
+      <span class="eyebrow">TODO ENTERTAINMENT</span>
+      <h1>مكتبتك <span>الترفيهية</span></h1>
+      <p id="playlistInfo">جاري تحميل القائمة...</p>
+    </section>
+
+    <nav class="category-tabs">
+      <button class="category active" data-category="live">البث المباشر</button>
+      <button class="category" data-category="movies">الأفلام</button>
+      <button class="category" data-category="series">المسلسلات</button>
+    </nav>
+
+    <section class="search-area">
+      <input id="searchInput" type="search" placeholder="ابحث عن قناة أو فيلم...">
+    </section>
+
+    <section id="channelGrid" class="channel-grid">
+      <p class="loading">جاري تحميل المحتوى...</p>
+    </section>
+
+    <section id="playerSection" class="player-section" hidden>
+      <div class="player-header">
+        <h2 id="playerTitle">المشغّل</h2>
+        <button id="closePlayer">إغلاق</button>
+      </div>
+      <video id="videoPlayer" controls playsinline></video>
+      <p id="playerMessage"></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="home.js"></script>
+</body>
+</html>
