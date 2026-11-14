@@ -9,7 +9,14 @@ if (!saved) {
   location.replace("index.html");
 }
 
-const config = saved ? JSON.parse(saved) : null;
+let config = null;
+
+try {
+  config = saved ? JSON.parse(saved) : null;
+} catch {
+  localStorage.removeItem("todo_playlist");
+  location.replace("index.html");
+}
 
 let allItems = [];
 let currentCategory = "live";
@@ -31,7 +38,10 @@ function escapeHTML(value) {
 function safeURL(value) {
   try {
     const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+
+    return ["http:", "https:"].includes(url.protocol)
+      ? url.href
+      : "";
   } catch {
     return "";
   }
@@ -57,10 +67,14 @@ function parseM3U(content) {
         url: "",
         type: "live"
       };
+
     } else if (value && !value.startsWith("#") && current) {
       current.url = safeURL(value);
 
-      if (current.url) items.push(current);
+      if (current.url) {
+        items.push(current);
+      }
+
       current = null;
     }
   }
@@ -72,7 +86,13 @@ async function loadM3U() {
   let content = config.content || "";
 
   if (!content && config.url) {
-    const response = await fetch(config.url);
+    const url = safeURL(config.url);
+
+    if (!url) {
+      throw new Error("رابط قائمة M3U غير صالح");
+    }
+
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error("تعذر تحميل قائمة M3U");
@@ -85,21 +105,41 @@ async function loadM3U() {
 }
 
 async function xtreamRequest(action = "") {
-  const server = config.server.replace(/\/+$/, "");
-  const url = new URL(server + "/player_api.php");
+  const response = await fetch(
+    "/.netlify/functions/xtream",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        server: config.server,
+        username: config.username,
+        password: config.password,
+        action
+      })
+    }
+  );
 
-  url.searchParams.set("username", config.username);
-  url.searchParams.set("password", config.password);
+  let data;
 
-  if (action) url.searchParams.set("action", action);
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error("فشل الاتصال بسيرفر Xtream");
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("استجابة غير صالحة من الخادم");
   }
 
-  return response.json();
+  if (!response.ok) {
+    throw new Error(
+      data.error || "فشل الاتصال بسيرفر Xtream"
+    );
+  }
+
+  if (!Array.isArray(data)) {
+    throw new Error("بيانات القائمة غير صحيحة");
+  }
+
+  return data;
 }
 
 async function loadXtream() {
@@ -109,27 +149,31 @@ async function loadXtream() {
     xtreamRequest("get_series")
   ]);
 
+  const server = config.server.replace(/\/+$/, "");
+  const username = encodeURIComponent(config.username);
+  const password = encodeURIComponent(config.password);
+
   return [
     ...live.map(item => ({
       id: item.stream_id,
-      name: item.name,
-      logo: item.stream_icon,
-      url: `${config.server.replace(/\/+$/, "")}/live/${encodeURIComponent(config.username)}/${encodeURIComponent(config.password)}/${item.stream_id}.m3u8`,
+      name: item.name || "قناة بدون اسم",
+      logo: item.stream_icon || "",
+      url: `${server}/live/${username}/${password}/${item.stream_id}.m3u8`,
       type: "live"
     })),
 
     ...movies.map(item => ({
       id: item.stream_id,
-      name: item.name,
-      logo: item.stream_icon,
-      url: `${config.server.replace(/\/+$/, "")}/movie/${encodeURIComponent(config.username)}/${encodeURIComponent(config.password)}/${item.stream_id}.${item.container_extension || "mp4"}`,
+      name: item.name || "فيلم بدون اسم",
+      logo: item.stream_icon || "",
+      url: `${server}/movie/${username}/${password}/${item.stream_id}.${item.container_extension || "mp4"}`,
       type: "movies"
     })),
 
     ...series.map(item => ({
       id: item.series_id,
-      name: item.name,
-      logo: item.cover,
+      name: item.name || "مسلسل بدون اسم",
+      logo: item.cover || "",
       type: "series"
     }))
   ];
@@ -140,35 +184,37 @@ function renderItems() {
 
   const filtered = allItems.filter(item =>
     item.type === currentCategory &&
-    item.name.toLowerCase().includes(search)
+    String(item.name).toLowerCase().includes(search)
   );
 
   grid.innerHTML = "";
 
   if (!filtered.length) {
-    grid.innerHTML = '<p class="loading">لا يوجد محتوى في هذا القسم.</p>';
+    grid.innerHTML =
+      '<p class="loading">لا يوجد محتوى في هذا القسم.</p>';
     return;
   }
 
   filtered.forEach(item => {
     const card = document.createElement("button");
+
     card.className = "channel-card";
     card.type = "button";
 
     const logo = safeURL(item.logo);
 
     card.innerHTML = `
-      <img src="${escapeHTML(logo || "")}" alt=""
+      <img src="${escapeHTML(logo)}" alt=""
         onerror="this.style.visibility='hidden'">
       <h3>${escapeHTML(item.name)}</h3>
     `;
 
     card.addEventListener("click", () => {
       if (item.type === "series") {
-        $("playerMessage").textContent =
-          "اختيار المسلسل يحتاج تحميل المواسم والحلقات.";
         $("playerSection").hidden = false;
         $("playerTitle").textContent = item.name;
+        $("playerMessage").textContent =
+          "تحميل المواسم والحلقات غير متوفر حالياً.";
         return;
       }
 
@@ -183,7 +229,8 @@ function playItem(item) {
   const url = safeURL(item.url);
 
   if (!url) {
-    $("playerMessage").textContent = "رابط البث غير صالح.";
+    $("playerMessage").textContent =
+      "رابط البث غير صالح.";
     return;
   }
 
@@ -200,10 +247,13 @@ function playItem(item) {
   video.removeAttribute("src");
   video.load();
 
-  if (url.includes(".m3u8") &&
-      window.Hls &&
-      Hls.isSupported()) {
+  if (
+    url.includes(".m3u8") &&
+    window.Hls &&
+    Hls.isSupported()
+  ) {
     hls = new Hls();
+
     hls.loadSource(url);
     hls.attachMedia(video);
 
@@ -213,6 +263,10 @@ function playItem(item) {
           "تعذر تشغيل البث. تحقق من الرابط أو توافق السيرفر.";
       }
     });
+
+  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    video.src = url;
+
   } else {
     video.src = url;
   }
@@ -227,9 +281,9 @@ document.querySelectorAll(".category").forEach(button => {
   button.addEventListener("click", () => {
     currentCategory = button.dataset.category;
 
-    document.querySelectorAll(".category").forEach(tab =>
-      tab.classList.toggle("active", tab === button)
-    );
+    document.querySelectorAll(".category").forEach(tab => {
+      tab.classList.toggle("active", tab === button);
+    });
 
     renderItems();
   });
@@ -258,7 +312,9 @@ $("logoutBtn").addEventListener("click", () => {
 async function init() {
   try {
     $("playlistInfo").textContent =
-      config.mode === "xtream" ? "Xtream Codes" : "M3U Playlist";
+      config.mode === "xtream"
+        ? "Xtream Codes"
+        : "M3U Playlist";
 
     allItems = config.mode === "xtream"
       ? await loadXtream()
@@ -268,14 +324,22 @@ async function init() {
 
     $("playlistInfo").textContent =
       `تم تحميل ${allItems.length} عنصر`;
+
   } catch (error) {
     grid.innerHTML = "";
-    $("playlistInfo").textContent = "حدث خطأ أثناء تحميل القائمة.";
+
+    $("playlistInfo").textContent =
+      "حدث خطأ أثناء تحميل القائمة.";
+
     const errorMessage = document.createElement("p");
+
     errorMessage.className = "loading";
     errorMessage.textContent = error.message;
+
     grid.appendChild(errorMessage);
   }
 }
 
-if (config) init();
+if (config) {
+  init();
+}
